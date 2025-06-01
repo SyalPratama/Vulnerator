@@ -21,8 +21,8 @@
 Pastikan Python 3 sudah terpasang pada sistem Anda.
 
 ```bash
-git clone https://github.com/username/MarsHallVulnerator.git
-cd MarsHallVulnerator
+git clone https://github.com/username/Vulnerator.git
+cd Vulnerator
 pip install -r requirements.txt
 ```
 
