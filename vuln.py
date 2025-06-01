@@ -20,6 +20,12 @@ vulnerable_urls = {
     "lfi": []
 }
 
+def save_vulnerability(vuln_type, url, output_file):
+    if url not in vulnerable_urls[vuln_type]:
+        vulnerable_urls[vuln_type].append(url)
+    with open(output_file, 'a') as f:
+        f.write(f"[{vuln_type.upper()}] {url}\n")
+
 def is_same_domain(base_url, target_url):
     return urlparse(base_url).netloc == urlparse(target_url).netloc
 
@@ -39,43 +45,43 @@ def crawl(base_url, url, url_file):
             test_vulnerabilities(url, url_file)
 
         if test_laravel_debug_mode(url):
-            vulnerable_urls["laravel_debug_mode"].append(url)
+            save_vulnerability("laravel_debug_mode", url, url_file)
             print(f"[Laravel Debug Mode Exposed] {url}")
 
         csrf_issues = test_csrf_missing(soup, url)
         for form_url in csrf_issues:
-            vulnerable_urls["csrf_missing"].append(form_url)
+            save_vulnerability("csrf_missing", form_url, url_file)
             print(f"[CSRF Token Missing] {form_url}")
             exploit_csrf_missing(form_url, url_file)
 
         if test_laravel_mass_assignment(url):
-            vulnerable_urls["laravel_mass_assignment"].append(url)
+            save_vulnerability("laravel_mass_assignment", url, url_file)
             print(f"[Laravel Mass Assignment Possible] {url}")
 
-        test_file_upload_forms(url, soup)
+        test_file_upload_forms(url, soup, url_file)
 
         if test_ojs(url):
-            vulnerable_urls["ojs_exploit"].append(url)
+            save_vulnerability("ojs_exploit", url, url_file)
             print(f"[OJS Exploit Detected] {url}")
             exploit_ojs(url, url_file)
 
         if test_sql_login_bypass(url):
-            vulnerable_urls["sql_login_bypass"].append(url)
+            save_vulnerability("sql_login_bypass", url, url_file)
             print(f"[Login Bypass via SQL Detected] {url}")
             exploit_sql_login_bypass(url, url_file)
 
         if test_ssrf(url):
-            vulnerable_urls["ssrf"].append(url)
+            save_vulnerability("ssrf", url, url_file)
             print(f"[SSRF Possible] {url}")
             exploit_ssrf(url, url_file)
 
         if test_rce(url):
-            vulnerable_urls["rce"].append(url)
+            save_vulnerability("rce", url, url_file)
             print(f"[RCE Possible] {url}")
             exploit_rce(url, url_file)
 
         if test_lfi(url):
-            vulnerable_urls["lfi"].append(url)
+            save_vulnerability("lfi", url, url_file)
             print(f"[LFI Possible] {url}")
             exploit_lfi(url, url_file)
 
@@ -88,22 +94,22 @@ def crawl(base_url, url, url_file):
 
 def test_vulnerabilities(url, url_file):
     if test_sql_injection(url):
-        vulnerable_urls["sql_injection"].append(url)
+        save_vulnerability("sql_injection", url, url_file)
         print(f"[SQL Injection Possible] {url}")
         exploit_sql_injection(url, url_file)
 
     if test_xss(url):
-        vulnerable_urls["xss"].append(url)
+        save_vulnerability("xss", url, url_file)
         print(f"[XSS Possible] {url}")
         exploit_xss(url, url_file)
 
     if test_open_redirect(url):
-        vulnerable_urls["open_redirect"].append(url)
+        save_vulnerability("open_redirect", url, url_file)
         print(f"[Open Redirect Possible] {url}")
         exploit_open_redirect(url, url_file)
 
     if test_command_injection(url):
-        vulnerable_urls["command_injection"].append(url)
+        save_vulnerability("command_injection", url, url_file)
         print(f"[Command Injection Possible] {url}")
 
 def test_sql_injection(url):
@@ -172,11 +178,11 @@ def test_rce(url):
 def test_lfi(url):
     return 'file=' in url or 'path=' in url
 
-def test_file_upload_forms(page_url, soup):
+def test_file_upload_forms(page_url, soup, output_file):
     for form in soup.find_all('form'):
         file_inputs = form.find_all('input', {'type': 'file'})
         if file_inputs:
-            vulnerable_urls["file_upload"].append(page_url)
+            save_vulnerability("file_upload", page_url, output_file)
             print(f"[File Upload Possible] {page_url}")
 
 def test_laravel_mass_assignment(url):
